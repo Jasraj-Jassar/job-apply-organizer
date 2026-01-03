@@ -27,9 +27,44 @@ def _wrap_text(text: str, width: int) -> str:
 
 
 def write_description(
-    folder_path: Path, filename: str, description: str, width: int = 80
+    folder_path: Path,
+    filename: str,
+    description: str,
+    width: int = 80,
+    source_url: str | None = None,
 ) -> Path:
     file_path = folder_path / filename
-    payload = _wrap_text(description, width).rstrip() + "\n"
+    header_lines = []
+    if source_url:
+        header_lines.append(f"Source: {source_url.strip()}")
+        header_lines.append("")
+
+    wrapped = _wrap_text(description, width).rstrip()
+    if wrapped:
+        header_lines.append(wrapped)
+
+    payload = "\n".join(header_lines).rstrip() + "\n"
+    file_path.write_text(payload, encoding="utf-8")
+    return file_path
+
+
+def write_prompt_file(
+    folder_path: Path,
+    filename: str,
+    prompt_text: str,
+    description: str,
+    width: int = 80,
+) -> Path:
+    file_path = folder_path / filename
+    prompt_block = _wrap_text(prompt_text, width).rstrip()
+    description_block = _wrap_text(description, width).rstrip()
+
+    parts = []
+    if prompt_block:
+        parts.append(prompt_block)
+    if description_block:
+        parts.append(description_block)
+
+    payload = "\n\n".join(parts).rstrip() + "\n"
     file_path.write_text(payload, encoding="utf-8")
     return file_path

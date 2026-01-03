@@ -2,6 +2,7 @@ import re
 from pathlib import Path
 
 import file_ops
+import prompt_creator
 
 
 def _split_words(text: str) -> list:
@@ -26,7 +27,7 @@ def make_folder_name(title: str, company: str) -> str:
     return title_part or company_part or "Job-Posting"
 
 
-def process_job(job_data: dict, base_dir: Path) -> dict:
+def process_job(job_data: dict, base_dir: Path, source_url: str | None = None) -> dict:
     title = (job_data.get("title") or "").strip()
     company = (job_data.get("company") or "").strip()
     description = (job_data.get("description") or "").strip()
@@ -40,10 +41,18 @@ def process_job(job_data: dict, base_dir: Path) -> dict:
         folder_path,
         f"{folder_name}.txt",
         description or "Description not found.",
+        source_url=source_url,
+    )
+    prompt_path = file_ops.write_prompt_file(
+        folder_path,
+        "prompt.txt",
+        prompt_creator.get_prompt_text(),
+        description or "Description not found.",
     )
 
     return {
         "folder_name": folder_name,
         "folder_path": folder_path,
         "file_path": file_path,
+        "prompt_path": prompt_path,
     }

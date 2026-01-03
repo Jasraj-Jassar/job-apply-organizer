@@ -1,0 +1,5 @@
+Edit main.tex only. Revise the existing text to align with the job description
+below. Use relevant keywords and concepts, not verbatim sentences. Remove
+content that is irrelevant or redundant. You may delete, rewrite, or condense
+lines as needed, but do not change formatting, structure, or add new sections.
+Only modify the text content within main.tex.

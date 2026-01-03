@@ -1,0 +1,10 @@
+Dear Hiring Manager,
+
+I am applying for the **[Job Title]** position at **[Company Name]**. Please review my portfolio at **[Portfolio URL]**, which includes examples of my projects and technical work.
+
+My experience includes **[key technical skills or domains]**, hands-on implementation, and clear technical documentation. I hold **[Degree/Diploma]** with **[relevant certifications or training]**, and I work with **[tools, technologies, or methodologies relevant to the role]**.
+
+I would welcome the opportunity to discuss how I can contribute to effective and reliable outcomes for your team.
+
+Thank you,
+**[Full Name]**

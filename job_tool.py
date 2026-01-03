@@ -14,7 +14,7 @@ def main() -> None:
     args = parser.parse_args()
 
     job_data = scraper.scrape_job(args.url)
-    result = processor.process_job(job_data, Path.cwd())
+    result = processor.process_job(job_data, Path.cwd(), args.url)
 
     print(f"Created folder: {result['folder_path']}")
     print(f"Wrote description: {result['file_path']}")
