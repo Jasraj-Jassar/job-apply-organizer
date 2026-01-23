@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import shutil
 import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
@@ -87,6 +88,22 @@ def _cleanup_latex_aux(directory: Path, stem: str) -> None:
             continue
 
 
+def _open_folder_in_vscode(folder_path: Path) -> bool:
+    """Best-effort attempt to open the created folder in VS Code."""
+    code_cmd = shutil.which("code") or shutil.which("code.cmd") or shutil.which("code.exe")
+    if not code_cmd:
+        return False
+    try:
+        subprocess.Popen(
+            [code_cmd, str(folder_path)],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except OSError:
+        return False
+    return True
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
@@ -127,6 +144,10 @@ def main() -> None:
 
     print(f"Created folder: {result['folder_path']}")
     print(f"Wrote description: {result['file_path']}")
+    if _open_folder_in_vscode(result["folder_path"]):
+        print(f"Opened in VS Code: {result['folder_path']}")
+    else:
+        print("VS Code CLI not found; enable the `code` command to auto-open folders.")
     resume_template = result.get("resume_template_path")
     if resume_template:
         print(f"Copied LaTeX template: {resume_template}")
