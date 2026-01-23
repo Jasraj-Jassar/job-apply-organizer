@@ -1,5 +1,6 @@
 import http.cookiejar
 import json
+import platform
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -183,6 +184,51 @@ def _load_cookies() -> http.cookiejar.MozillaCookieJar | None:
         return None
 
 
+def _build_header_sets() -> list[dict]:
+    os_platform = platform.system().lower()
+    is_windows = os_platform.startswith("win")
+    ua_windows = (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+    ua_linux = (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+    )
+    ua_primary = ua_windows if is_windows else ua_linux
+    sec_platform = '"Windows"' if is_windows else '"Linux"'
+
+    return [
+        {
+            "User-Agent": ua_primary,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": sec_platform,
+        },
+        {"User-Agent": "Mozilla/5.0 (job-tool)"},
+        {
+            "User-Agent": ua_primary,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-CA,en;q=0.9",
+            "Cache-Control": "no-cache",
+            "Pragma": "no-cache",
+            "Connection": "keep-alive",
+            "Upgrade-Insecure-Requests": "1",
+        },
+    ]
+
+
 def _http_get(url: str, headers: dict, cookie_jar: http.cookiejar.CookieJar | None = None) -> str:
     import gzip
     import zlib
@@ -235,42 +281,7 @@ def fetch_html(url: str) -> str:
     # Detect site type
     is_linkedin = "linkedin.com" in url.lower()
 
-    header_sets = [
-        # LinkedIn-optimized headers (more complete browser simulation)
-        {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            ),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-            "Sec-Fetch-Dest": "document",
-            "Sec-Fetch-Mode": "navigate",
-            "Sec-Fetch-Site": "none",
-            "Sec-Fetch-User": "?1",
-            "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            "Sec-Ch-Ua-Mobile": "?0",
-            "Sec-Ch-Ua-Platform": '"Linux"',
-        },
-        {"User-Agent": "Mozilla/5.0 (job-tool)"},
-        {
-            "User-Agent": (
-                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-                "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
-            ),
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language": "en-CA,en;q=0.9",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
-            "Connection": "keep-alive",
-            "Upgrade-Insecure-Requests": "1",
-        },
-    ]
+    header_sets = _build_header_sets()
 
     last_error = None
     for headers in header_sets:
