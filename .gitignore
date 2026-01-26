@@ -8,3 +8,5 @@ venv/
 .env.*
 *.log
 cookies.txt
+templates/resume-template.tex
+templates_vf/resume-template.tex

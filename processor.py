@@ -6,6 +6,7 @@ import file_ops
 import prompt_creator
 
 _LATEX_TEMPLATE_PATH = Path(__file__).resolve().parent / "templates" / "resume-template.tex"
+_LATEX_TEMPLATE_PATH_VF = Path(__file__).resolve().parent / "templates_vf" / "resume-template.tex"
 _WINDOWS_RESERVED_NAMES = {
     "CON",
     "PRN",
@@ -138,7 +139,7 @@ def _normalize_slug_for_platform(slug: str) -> str:
     return cleaned or "Job-Posting"
 
 
-def process_job(job_data: dict, base_dir: Path, source_url: str | None = None) -> dict:
+def process_job(job_data: dict, base_dir: Path, source_url: str | None = None, french: bool = False) -> dict:
     title = (job_data.get("title") or "").strip()
     company = (job_data.get("company") or "").strip()
     description = (job_data.get("description") or "").strip()
@@ -157,17 +158,21 @@ def process_job(job_data: dict, base_dir: Path, source_url: str | None = None) -
     prompt_path = file_ops.write_prompt_file(
         folder_path,
         "prompt.txt",
-        prompt_creator.get_main_prompt_text(),
+        prompt_creator.get_main_prompt_text(french),
         description or "Description not found.",
     )
     cover_prompt_path = file_ops.write_prompt_file(
         folder_path,
         "prompt-cover.txt",
-        prompt_creator.get_cover_prompt_text(),
+        prompt_creator.get_cover_prompt_text(french),
         description or "Description not found.",
     )
+
+    template_path = _LATEX_TEMPLATE_PATH
+    if french:
+        template_path = _LATEX_TEMPLATE_PATH_VF
     resume_template_path = file_ops.copy_template_file(
-        _LATEX_TEMPLATE_PATH, folder_path, "resume-template.tex"
+        template_path, folder_path, "resume-template.tex"
     )
 
     return {

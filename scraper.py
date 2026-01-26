@@ -187,13 +187,14 @@ def _load_cookies() -> http.cookiejar.MozillaCookieJar | None:
 def _build_header_sets() -> list[dict]:
     os_platform = platform.system().lower()
     is_windows = os_platform.startswith("win")
+    # Updated to latest Chrome version (January 2026)
     ua_windows = (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     )
     ua_linux = (
         "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36"
+        "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
     )
     ua_primary = ua_windows if is_windows else ua_linux
     sec_platform = '"Windows"' if is_windows else '"Linux"'
@@ -201,30 +202,34 @@ def _build_header_sets() -> list[dict]:
     return [
         {
             "User-Agent": ua_primary,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.9",
-            "Accept-Encoding": "gzip, deflate",
-            "Cache-Control": "no-cache",
-            "Pragma": "no-cache",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+            "Accept-Language": "en-CA,en-US;q=0.9,en;q=0.8",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Cache-Control": "max-age=0",
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
             "Sec-Fetch-Dest": "document",
             "Sec-Fetch-Mode": "navigate",
             "Sec-Fetch-Site": "none",
             "Sec-Fetch-User": "?1",
-            "Sec-Ch-Ua": '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+            "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
             "Sec-Ch-Ua-Mobile": "?0",
             "Sec-Ch-Ua-Platform": sec_platform,
+            "Dnt": "1",
+            "Priority": "u=0, i",
         },
-        {"User-Agent": "Mozilla/5.0 (job-tool)"},
         {
             "User-Agent": ua_primary,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-CA,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
             "Cache-Control": "no-cache",
             "Pragma": "no-cache",
             "Connection": "keep-alive",
             "Upgrade-Insecure-Requests": "1",
+            "Sec-Ch-Ua": '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": sec_platform,
         },
     ]
 
@@ -270,7 +275,16 @@ def _http_get(url: str, headers: dict, cookie_jar: http.cookiejar.CookieJar | No
         return raw_data.decode("utf-8", errors="replace")
 
 
+def _get_referer(url: str) -> str:
+    """Get a plausible referer for the URL."""
+    parsed = urllib.parse.urlparse(url)
+    # Return the site's homepage as referer
+    return f"{parsed.scheme}://{parsed.netloc}/"
+
+
 def fetch_html(url: str) -> str:
+    import time
+
     local_path = _local_path_from_arg(url)
     if local_path:
         return _read_local(local_path)
@@ -280,12 +294,21 @@ def fetch_html(url: str) -> str:
 
     # Detect site type
     is_linkedin = "linkedin.com" in url.lower()
+    is_indeed = "indeed.com" in url.lower() or "indeed.ca" in url.lower()
 
     header_sets = _build_header_sets()
 
-    last_error = None
+    # Add referer to all header sets
+    referer = _get_referer(url)
     for headers in header_sets:
+        headers["Referer"] = referer
+
+    last_error = None
+    for i, headers in enumerate(header_sets):
         try:
+            # Small delay between retries to avoid rate limiting
+            if i > 0:
+                time.sleep(1)
             return _http_get(url, headers, cookie_jar)
         except urllib.error.HTTPError as exc:
             last_error = exc
@@ -300,6 +323,14 @@ def fetch_html(url: str) -> str:
                 "1. LinkedIn requires authentication - export your cookies using a browser extension\n"
                 "   (Cookie-Editor) to cookies.txt in Netscape format, or\n"
                 "2. Save the job page as HTML in your browser and pass the file path instead."
+            )
+        if last_error.code == 403 and is_indeed:
+            raise ValueError(
+                "Indeed blocked the request (HTTP 403). This usually means:\n"
+                "1. Your cookies.txt file may be expired - export fresh cookies from your browser\n"
+                "   using Cookie-Editor extension (Netscape format), or\n"
+                "2. Indeed is using enhanced bot protection - save the job page as HTML and pass\n"
+                "   the file path instead."
             )
         raise last_error
 

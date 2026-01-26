@@ -119,6 +119,14 @@ def main() -> None:
             "Leave blank to paste when prompted."
         ),
     )
+
+    # french option
+    parser.add_argument(
+        "-vf",
+        action="store_true",
+        help="Setup the application in French mode (default is English).",
+    )
+
     args = parser.parse_args()
 
     target = (args.url or "").strip()
@@ -140,7 +148,7 @@ def main() -> None:
         return
 
     job_data = scraper.scrape_job(target)
-    result = processor.process_job(job_data, Path.cwd(), target)
+    result = processor.process_job(job_data, Path.cwd(), target, french=args.vf)
 
     print(f"Created folder: {result['folder_path']}")
     print(f"Wrote description: {result['file_path']}")

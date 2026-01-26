@@ -12,9 +12,15 @@ def _read_template(path: Path) -> str:
     raise FileNotFoundError(f"Template not found: {path}")
 
 
-def get_main_prompt_text() -> str:
-    return _read_template(_PROMPT_TEMPLATE_PATH)
+def get_main_prompt_text(french: bool = False) -> str:
+    path = _PROMPT_TEMPLATE_PATH
+    if french:
+        path = _BASE_DIR / "templates_vf" / "prompt-template.txt"
+    return _read_template(path)
 
 
-def get_cover_prompt_text() -> str:
-    return _read_template(_COVER_TEMPLATE_PATH)
+def get_cover_prompt_text(french: bool = False) -> str:
+    path = _COVER_TEMPLATE_PATH
+    if french:
+        path = _BASE_DIR / "templates_vf" / "cover-letter-template.txt"
+    return _read_template(path)

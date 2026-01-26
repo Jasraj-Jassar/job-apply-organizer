@@ -1,7 +1,7 @@
-Edit resume-template.tex only using the following guidelines:
+Write in french. Edit resume-template.tex only using the following guidelines:
 - Revise the existing text to align with the job description below. 
 - Use relevant keywords and concepts, not verbatim sentences. 
 - Remove content that is irrelevant or redundant. You may delete, rewrite, or condense
 lines as needed, but do not change formatting, structure, or add new sections.
 - Do not change dates, job titles and company names.
-- Reduce the "Relevant Coursework" section to two lines by keeping the most related keywords to the job position.
+- Reduce the "Cours Pertinents" section to two lines by keeping the most related keywords to the job position.
