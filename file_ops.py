@@ -1,83 +1,49 @@
+"""File operations for job folder creation."""
+
 import shutil
-from pathlib import Path
 import textwrap
+from pathlib import Path
 
 
-def ensure_job_folder(base_dir: Path, folder_name: str) -> Path:
-    folder_path = base_dir / folder_name
-    folder_path.mkdir(parents=True, exist_ok=True)
-    return folder_path
+def ensure_job_folder(base_dir, folder_name):
+    path = Path(base_dir) / folder_name
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 
-def _wrap_text(text: str, width: int) -> str:
-    wrapped_lines = []
-    for raw_line in (text or "").splitlines():
-        line = raw_line.strip()
-        if not line:
-            wrapped_lines.append("")
-            continue
-        wrapped_lines.extend(
-            textwrap.fill(
-                line,
-                width=width,
-                break_long_words=False,
-                break_on_hyphens=False,
-            ).splitlines()
-        )
-    return "\n".join(wrapped_lines)
+def _wrap(text, width=80):
+    lines = []
+    for raw in (text or "").splitlines():
+        ln = raw.strip()
+        if not ln:
+            lines.append("")
+        else:
+            lines.extend(textwrap.fill(ln, width, break_long_words=False, break_on_hyphens=False).splitlines())
+    return "\n".join(lines)
 
 
-def write_description(
-    folder_path: Path,
-    filename: str,
-    description: str,
-    width: int = 80,
-    source_url: str | None = None,
-) -> Path:
-    file_path = folder_path / filename
-    header_lines = []
-    if source_url:
-        header_lines.append(f"Source: {source_url.strip()}")
-        header_lines.append("")
-
-    wrapped = _wrap_text(description, width).rstrip()
-    if wrapped:
-        header_lines.append(wrapped)
-
-    payload = "\n".join(header_lines).rstrip() + "\n"
-    file_path.write_text(payload, encoding="utf-8")
-    return file_path
-
-
-def write_prompt_file(
-    folder_path: Path,
-    filename: str,
-    prompt_text: str,
-    description: str,
-    width: int = 80,
-) -> Path:
-    file_path = folder_path / filename
-    prompt_block = _wrap_text(prompt_text, width).rstrip()
-    description_block = _wrap_text(description, width).rstrip()
-
+def write_description(folder, filename, description, width=80, source_url=None):
+    path = folder / filename
     parts = []
-    if prompt_block:
-        parts.append(prompt_block)
-    if description_block:
-        parts.append(description_block)
-
-    payload = "\n\n".join(parts).rstrip() + "\n"
-    file_path.write_text(payload, encoding="utf-8")
-    return file_path
+    if source_url:
+        parts.extend([f"Source: {source_url.strip()}", ""])
+    if text := _wrap(description, width).rstrip():
+        parts.append(text)
+    path.write_text("\n".join(parts).rstrip() + "\n", encoding="utf-8")
+    return path
 
 
-def copy_template_file(
-    template_path: Path, target_dir: Path, target_name: str | None = None
-) -> Path | None:
+def write_prompt_file(folder, filename, prompt, description, width=80):
+    path = folder / filename
+    parts = [p for p in [_wrap(prompt, width).rstrip(), _wrap(description, width).rstrip()] if p]
+    path.write_text("\n\n".join(parts).rstrip() + "\n", encoding="utf-8")
+    return path
+
+
+def copy_template(template_path, target_dir, target_name=None):
     if not template_path.exists():
         return None
-    target_path = target_dir / (target_name or template_path.name)
-    if target_path.exists():
-        return target_path
-    shutil.copyfile(template_path, target_path)
-    return target_path
+    target = target_dir / (target_name or template_path.name)
+    if not target.exists():
+        shutil.copyfile(template_path, target)
+    return target

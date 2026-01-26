@@ -1,26 +1,21 @@
+"""Template loading for prompts."""
+
 from pathlib import Path
 
-
-_BASE_DIR = Path(__file__).resolve().parent
-_PROMPT_TEMPLATE_PATH = _BASE_DIR / "templates" / "prompt-template.txt"
-_COVER_TEMPLATE_PATH = _BASE_DIR / "templates" / "cover-letter-template.txt"
-
-
-def _read_template(path: Path) -> str:
-    if path.exists():
-        return path.read_text(encoding="utf-8").strip()
-    raise FileNotFoundError(f"Template not found: {path}")
+_BASE = Path(__file__).parent
+_TPL = _BASE / "templates"
+_TPL_VF = _BASE / "templates_vf"
 
 
-def get_main_prompt_text(french: bool = False) -> str:
-    path = _PROMPT_TEMPLATE_PATH
-    if french:
-        path = _BASE_DIR / "templates_vf" / "prompt-template.txt"
-    return _read_template(path)
+def _read(path):
+    if not path.exists():
+        raise FileNotFoundError(f"Template not found: {path}")
+    return path.read_text(encoding="utf-8").strip()
 
 
-def get_cover_prompt_text(french: bool = False) -> str:
-    path = _COVER_TEMPLATE_PATH
-    if french:
-        path = _BASE_DIR / "templates_vf" / "cover-letter-template.txt"
-    return _read_template(path)
+def get_main_prompt(french=False):
+    return _read((_TPL_VF if french else _TPL) / "prompt-template.txt")
+
+
+def get_cover_prompt(french=False):
+    return _read((_TPL_VF if french else _TPL) / "cover-letter-template.txt")
